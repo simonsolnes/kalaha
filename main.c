@@ -4,162 +4,284 @@
 #include <string.h>
 
 typedef struct plr {
-	
 	char title[30];
 	int home;
 	int pits[1000];
-
 } plr_t;
 
 typedef struct game {
 	int pitnum;
 	plr_t *curplr;
 	plr_t *othplr;
-	
+	plr_t *winner;
 } game_t;
 
-
+void resetboard();
+void testprinting(game_t *game);
 game_t *populate();
 void refresh(game_t *game);
-void printpits(int *pits, int pitnum, int gap, int reverse);
+void printfarwards(int *pits, int pitnum, int gap);
+void printbackwards(int *pits, int pitnum, int gap);
 int findgap(game_t *game);
 int findspace(int a, int b, int gap);
+int *findstartplaces(int top, int bot);
 int intlen(int input);
-int findlongest(game_t *game);
+void inputmode(game_t *game);
+void distribute(game_t *game, int number);
+void switchplayers(game_t *game);
 
 int main() {
+	resetboard();
+}
 
-	game_t *rep = populate(6, 4);
+void resetboard() {
 
-	rep->curplr->pits[1] = 4444444;
-	rep->curplr->pits[2] = 44444444;
-	rep->curplr->pits[4] = 444;
+	game_t *game = populate(6, 4);
 
+	// testprinting(game);
 
-	refresh(rep);
-	
-	printf("Gap: %d", findgap(rep));
+	refresh(game);
+}
+
+void testprinting(game_t *game) {
+	game->curplr->pits[2] = 222;
+	game->curplr->pits[3] = 2222222;
+	game->curplr->pits[4] = 22;
+	game->curplr->pits[5] = 2;
+	game->curplr->pits[6] = 22;
+	game->othplr->pits[2] = 222222;
+	game->othplr->pits[3] = 22;
+	game->othplr->pits[4] = 222;
+	game->othplr->pits[5] = 2;
+	game->othplr->pits[6] = 2;
 
 }
 
 game_t *populate(int pitnum, int marbles) {
-
 	plr_t *plr1;
 	plr_t *plr2;
-
 	plr1 = malloc(sizeof(plr_t));
 	plr2 = malloc(sizeof(plr_t));
-
-
 	char tmp_title1[] = "Player 1";
 	char tmp_title2[]= "Player 2";
-
 	strcpy(plr1->title, tmp_title1);
 	strcpy(plr2->title, tmp_title2);
-
-
 	plr1->home = 0;
 	plr2->home = 0;
-
-
 	for (int i = 1; i <= pitnum; i++) {
 		plr1->pits[i] = marbles;
 		plr2->pits[i] = marbles;
 	}
-
 	game_t *game;
-
 	game = malloc(sizeof(game_t));
-
 	game->pitnum = pitnum;
 	game->curplr = plr1;
 	game->othplr = plr2;
-
+	game->winner = 0;
 	return game;
 }
 
 void refresh(game_t *game) {
 
-	// TODO print othplr backwards
 	for (int i = 0; i < 100; i++) printf("\n"); 
 
 	int gap = findgap(game);
 
+	int *startspaces;
+	startspaces = findstartplaces(game->othplr->pits[game->pitnum], game->curplr->pits[1]);
+
 	// Top section
-	printf("%s:    ", game->othplr->title);
-	printpits(game->othplr->pits, game->pitnum, gap,  1);
+	printf("%s: ", game->othplr->title);
+	for (int i = 1; i < *(startspaces + 1); i++) printf(" ");
+	printbackwards(game->othplr->pits, game->pitnum, gap);
 	printf("\n");
 
 	// Middle section
-	printf("          %d   ", game->othplr->home);
+	printf("          %d", game->othplr->home);
+	for (int i = 1; i < *(startspaces + 2); i++) printf(" ");
 	for (int i = 1; i <= game->pitnum; i++) {
 		printf("%d", i);
-		for (int i = 0; i < gap; i++) printf(" "); 
+		for (int r = 0; r < gap; r++) printf(" "); 
 	}
 	printf("%d", game->curplr->home);
 	printf("\n");
 
 	
-	printf("%s:  ", game->curplr->title);
-	printpits(game->curplr->pits, game->pitnum, gap, 0);
-	printf("\n");	
+	// Bottom section
+	printf("%s: ", game->curplr->title);
+	for (int i = 1; i < *(startspaces + 3); i++) printf(" ");
+	printfarwards(game->curplr->pits, game->pitnum, gap);
+	printf("\n\n");	
 
-	return;
-
+	inputmode(game);
 }
 
 
-void printpits(int *pits, int pitnum, int gap, int reverse) {
-	
-	if (reverse == 0) {
-		for (int i = 1; i <= pitnum; i++) {
-			printf("[%d]", pits[i]);
-			for (int p = 0; p < findspace(pits[i], pits[i + 1], gap); p++) printf(" ");
-		}
-
+void printfarwards(int *pits, int pitnum, int gap) {
+	for (int i = 1; i <= pitnum; i++) {
+		printf("[%d]", pits[i]);
+		for (int p = 0; p < findspace(pits[i], pits[i + 1], gap); p++) printf(" ");
 	}
+}
 
-	else if (reverse == 1)
-		for (int i = pitnum; i >= 1; i--)
-			printf("[%d]  ", pits[i]);
-	return;
+void printbackwards(int *pits, int pitnum, int gap) {
+	for (int i = pitnum; i >= 1; i--) {
+		printf("[%d]", pits[i]);
+		for (int p = 0; p < findspace(pits[i], pits[i - 1], gap); p++) printf(" ");
+	}
 }
 
 int findgap(game_t *game) {
 
-	int gap = 0;
-
+	int gap = 4;
 	for (int i = 1; i <= game->pitnum; i++) {
 		if (((int)(ceil(((float)(intlen(game->curplr->pits[i + 1])) / 2) - 1) +  floor(((float)(intlen(game->curplr->pits[i])))/ 2) + 2)) > gap)
 			gap = (int)(ceil(((float)(intlen(game->curplr->pits[i + 1])) / 2) - 1) +  floor(((float)(intlen(game->curplr->pits[i])))/ 2) + 2);
 		if (((int)(ceil(((float)(intlen(game->othplr->pits[i + 1])) / 2) - 1) +  floor(((float)(intlen(game->othplr->pits[i])))/ 2) + 2)) > gap)
 			gap = (int)(ceil(((float)(intlen(game->othplr->pits[i + 1])) / 2) - 1) +  floor(((float)(intlen(game->othplr->pits[i])))/ 2) + 2);
 	}
-
 	return gap;
-	
 }
 
 int findspace(int a, int b, int gap) {
-
 	int space = (int)(gap - 2 - (floor((float)(intlen(a)) / 2) + ceil(((float)(intlen(b))) / 2) - 1));
 	return space;
+}
+
+int *findstartplaces(int top, int bot) {
+
+	static int r[4] = {4,4,4,4};
+
+	return r;
+
 
 }
+
+
+/*
+
+int findstartspace(game_t *game, int topvalue) {
+
+	int largest;
+
+	int top = game->othplr->pits[game->pitnum];
+	int bot = game->curplr->pits[1];
+
+	if (top > bot)
+		largest = top;
+	if (bot > top)
+		largest = bot;
+
+	int startspace;
+
+
+	if (top == 1)
+		startspace = (ceil((intlen((float)(bot))) / 2) - ceil((intlen((float)(top)))/ 2));
+	else if (top == 0)
+		startspace = (int)(ceil(intlen((float)(largest)) / 2) - 1);
+
+	if (startspace > 0) startspace = ;
+
+
+
+	return startspace;
+
+}
+
+*/
 
 int intlen(int integer){
 	if (integer == 0) return 1;
 	return floor(log10(abs(integer))) + 1;
 }
+void inputmode(game_t *game){
 
-int findlongest(game_t *game) {
-	int output = 0;
-	for (int i = 1; i <= game->pitnum; i++) {
-		if (intlen(game->curplr->pits[i]) > output)
-			output = intlen(game->curplr->pits[i]);
-
-		if (intlen(game->othplr->pits[i]) > output)
-			output = intlen(game->othplr->pits[i]);
+	int input;
+	if (game->winner == 0)
+		printf("%s >  ", game->curplr->title);
+	else {
+		printf("%s won the game", game->winner->title);
+		while(1) {}
 	}
-	return output;
+
+
+    scanf("%d", &input);
+    if (input > game->pitnum)
+        refresh(game);
+    else if (input == 0)
+        resetboard();
+    else
+        distribute(game, input);
+}
+void distribute(game_t *game, int number) {
+
+
+	int marbles = game->curplr->pits[number];
+	int hand = marbles;
+	
+	game->curplr->pits[number] = 0;
+
+	int pos  = number + 1;
+
+	while (hand) {
+
+		for (int i = pos; (i <= game->pitnum) && (hand); i++, hand--)
+			game->curplr->pits[i]++;
+
+		pos = 1;
+
+		if (!hand)
+			if (game->curplr->pits[number + marbles] == 1)
+				if (game->othplr->pits[game->pitnum - number + marbles + 1] == 0)
+					refresh(game);
+		if (hand) { 
+			game->curplr->home++;
+			hand--;
+		}
+		if (!hand) refresh(game);
+
+		for (int i = 1; (i <= game->pitnum) && (hand); i++, hand--)
+			game->othplr->pits[i]++;
+
+		printf("loop");
+	}
+
+	
+	
+	int clean = 1;
+
+	for (int i = 0; i < game->pitnum; i++)
+		if ((game->curplr->pits[i] > 1) || (game->othplr->pits[i] > 1)) clean = 0;
+
+	if (clean == 1) {
+
+		for (int i = 1; i < game->pitnum; i++) {
+			game->curplr->home += game->curplr->pits[i];
+			game->curplr->pits[i] = 0;
+			game->othplr->home += game->othplr->pits[i];
+			game->othplr->pits[i] = 0;
+		}
+
+
+		if (game->curplr->home > game->othplr->home) game->winner = game->curplr;
+
+
+		// winner
+
+		
+	}
+
+	switchplayers(game);
+
+	refresh(game);
+
+}
+
+void switchplayers(game_t *game) {
+
+	plr_t *tmp;
+
+	tmp = game->curplr;
+	game->curplr = game->othplr;
+	game->othplr = tmp;
 }

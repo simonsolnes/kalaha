@@ -9,8 +9,8 @@ A scalable kalaha game written in c.
 
 ## Usage
 
-`$ git clone https://github.com/simonsolnes/kalaha.git`
-`$ cd kalaha`
-`gcc main.c -o kalaha`
-`./kalaha`
+`$ git clone https://github.com/simonsolnes/kalaha.git`  
+`$ cd kalaha`  
+`gcc main.c -o kalaha`  
+`./kalaha`  
 

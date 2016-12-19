@@ -11,6 +11,8 @@ A scalable kalaha game written in c.
 
 `$ git clone https://github.com/simonsolnes/kalaha.git`  
 `$ cd kalaha`  
-`gcc main.c -o kalaha`  
-`./kalaha`  
+`$ gcc main.c -o kalaha`  
+`$ ./kalaha`  
 
+Or just everything in one line:  
+`$ git clone https://github.com/simonsolnes/kalaha.git && cd kalaha && gcc main.c -o kalaha && ./kalaha`  

@@ -7,11 +7,10 @@ A scalable kalaha game written in c.
 ![Screenshot](https://github.com/simonsolnes/kalaha/blob/master/ss1.png)
 ![Screenshot](https://github.com/simonsolnes/kalaha/blob/master/ss2.png)
 
-## Compiling
+## Usage
 
+`$ git clone https://github.com/simonsolnes/kalaha.git`
+`$ cd kalaha`
 `gcc main.c -o kalaha`
-
-## Running
-
 `./kalaha`
 
